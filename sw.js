@@ -5,22 +5,24 @@ self.addEventListener('install', e => {
 const version = 'universalBots'
 self.addEventListener('activate', e => {
     e.waitUntil(
-        caches.keys().then( allCaches => {
-            allCaches.map(cacheName => cacheName !== version ? caches.delete(cacheName) : cacheName)
-        })
+        // caches.keys().then( allCaches => {
+        //     allCaches.map(cacheName => cacheName !== version ? caches.delete(cacheName) : cacheName)
+        // })
     )
 })
 
 self.addEventListener('fetch', e => {
     e.respondWith(
-        fetch(e.request).then( allReq => {
-            const resClone = allReq.clone();
+        // fetch(e.request)
 
-            caches.open(version).then(cache => {
-                cache.put(e.request, resClone)
-            })
+        // .then( allReq => {
+        //     // const resClone = allReq.clone();
 
-            return allReq
-        }).catch( () => caches.match(e.request))
+        //     // caches.open(version).then(cache => {
+        //     //     cache.put(e.request, resClone)
+        //     // })
+
+        //     return allReq
+        // }).catch( () => caches.match(e.request))
     )
 })

@@ -666,7 +666,7 @@
                 // will connect to socket
                 const scene = new Scene(this._engine)
                 
-                const cam = new ArcRotateCamera("fieldCam", Math.PI/2 + .3, .8, 9, new Vector3(0,0,0), scene)
+                const cam = new ArcRotateCamera("fieldCam", Math.PI/2 + .3, .8, 90, new Vector3(0,0,0), scene)
                 // cam.attachControl(canvas, true)
                 // cam.panningDistanceLimit = .0001
                 cam.checkCollisions = true
@@ -674,23 +674,23 @@
                 // const camTarg = MeshBuilder.CreateBox("camTarg", { size: .1}, scene)
                 // camTarg.actionManager = new BABYLON.ActionManager(scene)
                 
-                if(this._desktopMode){
-                    cam.attachControl(canvas, true)
-                    cam.collisionRadius = new Vector3(.4,.5,.4)
-                    cam.angularSensibilityX = 5000
-                    cam.angularSensibilityY = 5000
-                    cam.lowerRadiusLimit = 15 ;
-                    cam.upperRadiusLimit = 20//6.1
-                    // cam.lowerBetaLimit = .9;
-                    // cam.upperBetaLimit = .9
+                // if(this._desktopMode){
+                //     cam.attachControl(canvas, true)
+                //     cam.collisionRadius = new Vector3(.4,.5,.4)
+                //     cam.angularSensibilityX = 5000
+                //     cam.angularSensibilityY = 5000
+                //     cam.lowerRadiusLimit = 15 ;
+                //     cam.upperRadiusLimit = 20//6.1
+                //     // cam.lowerBetaLimit = .9;
+                //     // cam.upperBetaLimit = .9
 
-                    cam.onCollide = m => {
-                        if(m.name.includes("cliff")){
-                            this._camBLocked = true
-                            if(cam.upperRadiusLimit > 4) cam.upperRadiusLimit -= 0.3
-                        }
-                    }
-                }
+                //     cam.onCollide = m => {
+                //         if(m.name.includes("cliff")){
+                //             this._camBLocked = true
+                //             if(cam.upperRadiusLimit > 4) cam.upperRadiusLimit -= 0.3
+                //         }
+                //     }
+                // }
         
                 // camera.lowerBetaLimit = 0.01;
                 // camera.upperBetaLimit = (1.4) * 0.99;
@@ -745,30 +745,11 @@
                         const mechCor = scene.getMeshByName(`core.${this._botDet._id}`)
                         const cor = mechCor.getAbsolutePosition()
                         cam.setTarget(myMech)
-                        // camTarg.position = new Vector3(cor.x, .2, cor.z)
-                        // cam.setTarget(camTarg)
-                        // camTarg.actionManager.registerAction(new ExecuteCodeAction(
-                        //     {
-                        //         trigger: ActionManager.OnIntersectionEnterTrigger,
-                        //         parameter: mechCor
-                        //     }, e => {
-                        //         this._camTargCollided = true
-                                
-                        //     }
-                        // ))
-                        // camTarg.actionManager.registerAction(new ExecuteCodeAction(
-                        //     {
-                        //         trigger: ActionManager.OnIntersectionExitTrigger,
-                        //         parameter: mechCor
-                        //     }, e => {
-                        //         this._camTargCollided = false
-                        //     }
-                        // ))
                         if(!this._desktopMode) {
                             cam.alpha = -Math.PI/2;
                             cam.beta = .8
-                            cam.radius = 18
-
+                            cam.radius = 25
+                            cam.lowerRadiusLimit = 18
                             log("camera setup to mobile mode")
                         }else{
                             cam.attachControl(canvas, true)
@@ -889,7 +870,7 @@
 
                 const toRender = () => {
 
-                    if(cam.upperRadiusLimit <= 20){
+                    if(cam.upperRadiusLimit <= 20 && this._desktopMode){
                         cam.upperRadiusLimit += 0.03
                     }
                     if(!this._machinez.length) return
