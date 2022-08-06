@@ -1,0 +1,13 @@
+export { M as MorphTarget } from '../../../common/morphTarget-234b6abf.js';
+import '../../../common/tslib.es6-2542203d.js';
+import '../../../common/observable-08535f24.js';
+import '../../../common/engineStore-733743e8.js';
+import '../../../common/buffer-82c85d65.js';
+import '../../../common/dataBuffer-bed89e2d.js';
+import '../../../common/decorators-549f2b16.js';
+import '../../../common/math.vector-92740b4e.js';
+import '../../../common/math.scalar-e66d1d02.js';
+import '../../../common/arrayTools-18b75ee3.js';
+import '../../../common/typeStore-e0f83823.js';
+import '../../../common/devTools-40c203e4.js';
+import '../../../common/math.color-1c350db4.js';

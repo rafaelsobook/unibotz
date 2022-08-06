@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#000000" />
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="./images/myicon.png">
+    <link rel="apple-touch-icon" href="./images//myicon.png">
+    <title>Universal Bots</title>
+
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/babylonjs/5.0.0/babylon.js"></script> -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script> -->
+    <!-- <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script> -->
+    <!-- <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/babylonjs-gui@5.5.6/babylon.gui.min.js"></script> -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.1/axios.min.js"></script> -->
+    <link rel="stylesheet" href="./styles/styles.css">
+</head>
+
+<body>
+    <canvas id="renderCanvas" touch-action="none"></canvas>
+
+    <div class="intro-home">
+        <div class="intro-cont">
+            <p class="game-ttle">Adventure Valley</p>
+            <div class="intro-login-form">
+                <div class="inp-bx">
+                    <label for="username">Username</label>
+                    <input type="text" id="usern" class="sgn-up-inp" />
+                </div>
+                <div class="inp-bx">
+                    <label for="password">Password</label>
+                    <input type="password" id="passd" class="sgn-up-inp" />
+                </div>
+            </div>
+            <div class="bot">
+                <button class="intro-btn" id="sgnup">Register</button>
+                <button class="intro-btn" id="lgn">Login</button>
+                <button class="intro-btn" id="installGame">Install</button>
+            </div>
+        </div>
+        <div class="intro-signup">
+            <p class="game-ttle">Adventure Valley</p>
+            <div class="bot">
+                <p class="sgn-cap">Personal Details</p>
+                <div class="inp-bx">
+                    <label for="name">Enter Full Name</label>
+                    <input type="text" id="name" class="sgn-up-inp" />
+                </div>
+                <div class="inp-bx">
+                    <label for="username">Enter Username</label>
+                    <input type="text" id="username" class="sgn-up-inp" />
+                </div>
+                <div class="inp-bx">
+                    <label for="country">Current Country</label>
+                    <input type="text" id="country" class="sgn-up-inp" />
+                </div>
+                <br />
+                <p class="sgn-cap">Security Details</p>
+                <div class="sec-cont">
+                    <div class="inp-bx">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" class="sgn-up-inp" />
+                    </div>
+                    <div class="inp-bx">
+                        <label for="password">Confirm Password</label>
+                        <input type="password" id="confirm" class="sgn-up-inp" />
+                    </div>
+                </div>
+                <div class="sgn-btn-bx">
+                    <button class="sgn-btn" id="goBack">go back</button>
+                    <button class="sgn-btn" id="register">Register & Start</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="set-character">
+        <div class="set-charac-bx">
+            <p class="set-cap">Enter Character Name</p>
+            <input type="text" id="characName" />
+            <button class="start-game">START</button>
+        </div>
+    </div>
+
+    <div id="loadingScreen">
+        <img src="./images/settings/menu.png" alt="" class="lc-img">
+        <p class="lc-cap">Loading</p>
+    </div>
+    <!-- CREATING BOTS GUI RELATED -->
+    <div class="create-bot-container">
+        <div class="cb-bx hdbx" id="hdzList">
+        </div> 
+        <div class="cb-bx" id="bdzList">
+        </div> 
+    </div>
+    <div class="cbc-display-gui">
+        <h2 class="cdg-cap">Create Bot</h2>
+
+        <div class="cdg-input-cont">
+            <input type="text" class="cdg-inp"
+            id="botnameinp" placeholder="Enter Bot Name" />
+            <button class="cdg-btn">CREATE</button>
+        </div>
+    </div>
+
+    <div class="home-container">
+        <div class="start-btn-cont">
+            <button id="startBtn">Launch</button>
+        </div>
+    </div>
+
+    <!-- BOT ON FIELD GUI -->
+    <div class="fire-btn">
+        <img src="./images/settings/bullet.png" class="fireBtn-img" />
+    </div>
+
+    <div class="status-container">
+        <div class="sc-left"></div>
+        <div class="sc-mid sc-bxx">
+            <p class="sccap">energy</p>
+            <p class="sccap scnumber" id="energy">0%</p>
+        </div>
+        <div class="sc-right sc-bxx">
+            <p class="sccapred">damage</p>
+            <p class="sccapred scnumber" id="dmgTaken">0%</p>
+        </div>
+    </div>
+
+    <!-- SIGNS -->
+    <div class="warning-sign">
+        <div class="ws-bx">
+            <div class="ws-sign">
+                <div class="ws-line"></div>
+                <div class="ws-line"></div>
+                <div class="ws-line"></div>
+                <div class="ws-bx-cap">!</div>
+            </div>
+            <p class="ws-cap">Warning ! severe damage detected</p>
+        </div>
+    </div>
+    <script type="text/javascript">
+        if('serviceWorker' in navigator){
+            window.addEventListener('load', e => {
+            navigator.serviceWorker.register('sw.js')
+            })
+        }
+    </script>
+    <script type="module" src="./index.js"></script>
+</body>
+
+</html>
