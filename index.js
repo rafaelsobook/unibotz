@@ -5,7 +5,7 @@
         // import * as cannon from 'cannon'
         // import { CannonJSPlugin } from "babylonjs";
         // window.CANNON = cannon
-        const webSocketURL = "ws://unibotzsocket.herokuapp.com"
+        const webSocketURL = "https://unibotzsocket.herokuapp.com/"
         // const webSocketURL = "ws://localhost:3000"
 
         const installGame = document.getElementById("installGame")
