@@ -5,7 +5,7 @@
         // import * as cannon from 'cannon'
         // import { CannonJSPlugin } from "babylonjs";
         // window.CANNON = cannon
-        const webSocketURL = "https://unibotzsocket.herokuapp.com"
+        const webSocketURL = "ws://unibotzsocket.herokuapp.com"
         // const webSocketURL = "ws://localhost:3000"
 
         const installGame = document.getElementById("installGame")
@@ -87,6 +87,9 @@
         const statusCont = document.querySelector('.status-container')
         const energy = document.getElementById('energy')
         const dmgTaken = document.getElementById('dmgTaken')
+        const chargeCont = document.querySelector('.charge-container')
+        const barsCont = document.getElementById('barsCont')
+
         // warnsign
         const warnSign = document.querySelector('.warning-sign')
         
@@ -142,11 +145,12 @@
 
                 this.deductEn = .009
                 this.devSpeed = .001
+                this.barsLength = 0
 
                 // ACTIONS RELATED
                 this._willFireTimeOut //timeout to na kelangan i clear pag kikilos ka para di mag release yung bala
                 this._canFireTimeOut // eto naman kada baril mo iclear niya yung timeout na to kase etong timeout na to e pang canpress = true
-
+                this._barsInterval // interval ng bars kada 1.5sec nag increase
                 // mode
                 if(window.innerHeight < 600){
                     this._desktopMode = false
@@ -352,10 +356,12 @@
             _showFieldUI(){
                 fireBtn.style.display = "block"
                 statusCont.style.display = "flex"
+                chargeCont.style.display = "block"
             }
             _hideFieldUI(){
                 fireBtn.style.display = "none"
                 statusCont.style.display = "none"
+                chargeCont.style.display = "none"
             }
             stop(){
                 this._canPress = false
@@ -666,31 +672,36 @@
                 // will connect to socket
                 const scene = new Scene(this._engine)
                 
-                const cam = new ArcRotateCamera("fieldCam", Math.PI/2 + .3, .8, 90, new Vector3(0,0,0), scene)
+                const cam = new ArcRotateCamera("fieldCam", Math.PI/2 + .3, .8, 9, new Vector3(0,5,0), scene)
                 // cam.attachControl(canvas, true)
                 // cam.panningDistanceLimit = .0001
                 cam.checkCollisions = true
                 
+                window.addEventListener("keypress", e => {
+                    if(e.key === "k"){
+                        cam.lowerRadiusLimit += 1
+                    }
+                })
                 // const camTarg = MeshBuilder.CreateBox("camTarg", { size: .1}, scene)
                 // camTarg.actionManager = new BABYLON.ActionManager(scene)
                 
-                // if(this._desktopMode){
-                //     cam.attachControl(canvas, true)
-                //     cam.collisionRadius = new Vector3(.4,.5,.4)
-                //     cam.angularSensibilityX = 5000
-                //     cam.angularSensibilityY = 5000
-                //     cam.lowerRadiusLimit = 15 ;
-                //     cam.upperRadiusLimit = 20//6.1
-                //     // cam.lowerBetaLimit = .9;
-                //     // cam.upperBetaLimit = .9
+                if(this._desktopMode){
+                    cam.attachControl(canvas, true)
+                    cam.collisionRadius = new Vector3(.4,.5,.4)
+                    cam.angularSensibilityX = 5000
+                    cam.angularSensibilityY = 5000
+                    cam.lowerRadiusLimit = 15 ;
+                    cam.upperRadiusLimit = 20//6.1
+                    // cam.lowerBetaLimit = .9;
+                    // cam.upperBetaLimit = .9
 
-                //     cam.onCollide = m => {
-                //         if(m.name.includes("cliff")){
-                //             this._camBLocked = true
-                //             if(cam.upperRadiusLimit > 4) cam.upperRadiusLimit -= 0.3
-                //         }
-                //     }
-                // }
+                    cam.onCollide = m => {
+                        if(m.name.includes("cliff")){
+                            this._camBLocked = true
+                            if(cam.upperRadiusLimit > 4) cam.upperRadiusLimit -= 0.3
+                        }
+                    }
+                }
         
                 // camera.lowerBetaLimit = 0.01;
                 // camera.upperBetaLimit = (1.4) * 0.99;
@@ -699,7 +710,7 @@
                 const light = new HemisphericLight("fieldLight", new Vector3(0,1,0), scene)
 
                 const gl = new BABYLON.GlowLayer("glow", scene);
-                gl.intensity = 0.5;
+                gl.intensity = 2;
                 // creation of fire bullet
                 const fireBulletJson = {"name":"CPU particle system","id":"default system","capacity":10000,"disposeOnStop":false,"manualEmitCount":-1,"emitter":[0,0,0],"particleEmitterType":{"type":"ConeParticleEmitter","radius":0.1,"angle":0.7853981633974483,"directionRandomizer":0,"radiusRange":1,"heightRange":1,"emitFromSpawnPointOnly":false},"texture":{"tags":null,"url":"https://assets.babylonjs.com/textures/flare.png","uOffset":0,"vOffset":0,"uScale":1,"vScale":1,"uAng":0,"vAng":0,"wAng":0,"uRotationCenter":0.5,"vRotationCenter":0.5,"wRotationCenter":0.5,"homogeneousRotationInUVTransform":false,"isBlocking":true,"name":"https://assets.babylonjs.com/textures/flare.png","hasAlpha":false,"getAlphaFromRGB":false,"level":1,"coordinatesIndex":0,"coordinatesMode":0,"wrapU":1,"wrapV":1,"wrapR":1,"anisotropicFilteringLevel":4,"isCube":false,"is3D":false,"is2DArray":false,"gammaSpace":true,"invertZ":false,"lodLevelInAlpha":false,"lodGenerationOffset":0,"lodGenerationScale":0,"linearSpecularLOD":false,"isRenderTarget":false,"animations":[],"invertY":true,"samplingMode":3,"_useSRGBBuffer":false},"isLocal":false,"animations":[],"beginAnimationOnStart":false,"beginAnimationFrom":0,"beginAnimationTo":60,"beginAnimationLoop":false,"startDelay":0,"renderingGroupId":0,"isBillboardBased":true,"billboardMode":7,"minAngularSpeed":0,"maxAngularSpeed":0,"minSize":1,"maxSize":1.1,"minScaleX":1,"maxScaleX":1,"minScaleY":1,"maxScaleY":1,"minEmitPower":2,"maxEmitPower":2,"minLifeTime":0.09,"maxLifeTime":0.12,"emitRate":70,"gravity":[0,0,0],"noiseStrength":[10,10,10],"color1":[0.16470588235294117,0.00392156862745098,0.00392156862745098,1],"color2":[0.2627450980392157,0.12156862745098039,0,1],"colorDead":[0.16862745098039217,0,0,1],"updateSpeed":0.032,"targetStopDuration":0,"blendMode":0,"preWarmCycles":0,"preWarmStepOffset":1,"minInitialRotation":0,"maxInitialRotation":0,"startSpriteCellID":0,"spriteCellLoop":true,"endSpriteCellID":0,"spriteCellChangeSpeed":1,"spriteCellWidth":0,"spriteCellHeight":0,"spriteRandomStartCell":false,"isAnimationSheetEnabled":false,"textureMask":[1,1,1,1],"customShader":null,"preventAutoStart":false}
                 const fBulletSys = ParticleSystem.Parse(fireBulletJson, scene, "")
@@ -745,14 +756,13 @@
                         const mechCor = scene.getMeshByName(`core.${this._botDet._id}`)
                         const cor = mechCor.getAbsolutePosition()
                         cam.setTarget(myMech)
+                        log(myMech)
                         if(!this._desktopMode) {
                             cam.alpha = -Math.PI/2;
                             cam.beta = .8
-                            cam.radius = 25
+                            cam.radius = 18
                             cam.lowerRadiusLimit = 18
                             log("camera setup to mobile mode")
-                        }else{
-                            cam.attachControl(canvas, true)
                         }
                         this._canPress = true
                         const {x,y,z} = myMech.position
@@ -767,21 +777,30 @@
                                 this._showWarnDeath(3000)
                             }, 3000)
                         }
+
+                        this._barsInterval = setInterval( () => {
+                            if(this.barsLength >= 5) return
+                            this.createBar()
+                            this.barsLength++
+                        }, 1500)
                     }else{
                         log("first loop of interval, bot not found")
                     }
                 }, 1000)
 
-                let ml = false
-                let mr = false
-                let mf = false
-                let moved = 0
+                let ml = 0
+                let mr = 0
+                let mf = 0
+                let mb = 0
+                let canMove = true
+                let moveInt = 0
                 scene.actionManager = new ActionManager(scene)
                 scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyDownTrigger, e => {
                     if(!this._canPress) return log("not yet allowed to move")
                     const keyp = e.sourceEvent.key.toLowerCase()
-
-                    if(keyp === 's' || keyp === 'w' || keyp === 'a' || keyp === 'd' && moved <= 0){
+                    let bxDir
+                    const moveFunc = () => {
+                        cam.lowerRadiusLimit += 1
                         this._canFire = false
                         this._clearAllCurrentAnim()
                         const {x,z} = this._myMechDet.body.position
@@ -789,40 +808,11 @@
                         const camD = cam.getForwardRay().direction
                         const toLook = bx.position.add(new Vector3(camD.x,0,camD.z))
                         bx.lookAt(new Vector3(toLook.x,bx.position.y,toLook.z),0,0,0)
-                        moved++
-                    }
-                    let bxDir
-                    switch(keyp){
-                        case "w":
-                            // const {x,z} = this._myMechDet.body.position
-                           
-                            // const camD = cam.getForwardRay().direction
-                            // bx.position = this._myMechDet.body.position.add(new Vector3(camD.x,0,camD.z))
-                            // const toLook = bx.position.add(new Vector3(camD.x,0,camD.z))
-                            // bx.lookAt(new Vector3(toLook.x,bx.position.y,toLook.z),0,0,0)
 
-                            bx.locallyTranslate(new Vector3(0,0,20))
-                            bxDir = bx.getAbsolutePosition()
-                        break;
-                        case "a":
-                            
-                            bx.locallyTranslate(new Vector3(-20,0,0))
-                            bxDir = bx.getAbsolutePosition()
-                        break;
-                        case "d":
-                            
-                            bx.locallyTranslate(new Vector3(20,0,0))
-                            bxDir = bx.getAbsolutePosition()
-                        break;
-                        case "s":
-                            
-                            bx.locallyTranslate(new Vector3(0,0,-20))
-                            bxDir = bx.getAbsolutePosition()
-                        break;
-
+                        
                     }
 
-                    if(keyp === 'w' || keyp === 'a' || keyp === 'd' || keyp === 's'){
+                    const moveSocket = () => {
                         this._botDet.energy -= this.deductEn
                         this.updateEnergy(this._botDet)
                         socket.emit("move", ({
@@ -830,15 +820,44 @@
                             botId: this._myMechDet._id, 
                             dirTarg: {x: bxDir.x, z: bxDir.z}
                         }))
-                    }       
+                    }
+                    
+                    switch(keyp){
+                        case "w":                            
+                            moveFunc()
+                            bx.locallyTranslate(new Vector3(0,0,20))
+                            bxDir = bx.getAbsolutePosition()
+                            moveSocket()
+                        break;
+                        case "a":
+                            moveFunc()
+                            bx.locallyTranslate(new Vector3(-20,0,0))
+                            bxDir = bx.getAbsolutePosition()
+                            moveSocket()
 
+                        break;
+                        case "d":
+                            moveFunc()
+                            bx.locallyTranslate(new Vector3(20,0,0))
+                            bxDir = bx.getAbsolutePosition()
+                            moveSocket()
+                        break;
+                        case "s":
+                            moveFunc()
+                            bx.locallyTranslate(new Vector3(0,0,-20))
+                            bxDir = bx.getAbsolutePosition()
+                            moveSocket()
+                        break;
 
+                    }
                     
                 }))
                 scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyUpTrigger, e => {
                     if(!this._canPress) return log("not yet allowed to move")
                     const kepress = e.sourceEvent.key.toLowerCase()
+
                     if(kepress === "w" || kepress === "a" || kepress === "d" || kepress === "s"){
+                        cam.lowerRadiusLimit -= 1
                         this._canFire = true
                         const bxDir = bx.getAbsolutePosition()
                         const myBody = scene.getMeshByName(`Body.${this._botDet._id}`)
@@ -853,7 +872,7 @@
                         }) )
 
                         this.saveLocOnline({xloc: x, zloc: z})
-                        moved = 0
+
                     }
                     if(e.sourceEvent.key === " "){
                         log(this._myMechDet.body.getAbsolutePosition())
@@ -870,7 +889,7 @@
 
                 const toRender = () => {
 
-                    if(cam.upperRadiusLimit <= 20 && this._desktopMode){
+                    if(cam.upperRadiusLimit <= 20){
                         cam.upperRadiusLimit += 0.03
                     }
                     if(!this._machinez.length) return
@@ -939,6 +958,7 @@
 
                 // ALL FIRE ACTIONS
                 socket.on('uzerFired', data => {
+                    
                     let toDisposeTimeOut
                     const theBotFired = scene.getMeshByName(`Body.${data.botId}`)
                     if(!theBotFired) return log('did not found the bot who fired !')
@@ -1079,6 +1099,7 @@
                         this._botDet.dmgTaken += data.dmg
                         this._botDet.energy -= parseInt(data.dmg/3)
                         
+                        // if the bot is destroyed
                         if(this._botDet.dmgTaken >= this._botDet.durability){
                             this.stop()
                             socket.emit("explode", data.botId)
@@ -1093,7 +1114,7 @@
                         const body = {
                             ene: this._botDet.energy,
                             dam: this._botDet.dmgTaken
-                        }
+                        }// save my current energy and damage status to the db
                         this.updateDatabase(body,'PATCH',`bots/energydamage/${data.botId}`)
                     }
                 })
@@ -1153,15 +1174,18 @@
                 const bx = this._scene.getMeshByName('bx')
                 if(!bx) return log("cant find your bx sir")
                 const {x,z} = bx.position
-                this.loadFiring()
+                this.loadFiring() // di mapipindot yung fire button
                 this._willFireTimeOut = setTimeout( () => {
+                    const myDMG = (this._botDet.weapon.dmg/5) * this.barsLength
+                    log("my weapon dmg is " + this._botDet.weapon.dmg)
+                    log("my current dmg is " + myDMG)
                     socket.emit("fire", ({
                         dirTarg: {x,z},
                         speed: .75,
                         botId: this._botDet._id,
-                        dmg: this._botDet.weapon.dmg
+                        dmg: myDMG
                     }))
-                    
+                    this.resetBars()
                 }, 600)
 
             }
@@ -1438,6 +1462,16 @@
                 
 
                 return wallz
+            }
+            createBar(){
+                const newBar = document.createElement('div')
+                newBar.className = "bar"
+
+                barsCont.append(newBar)
+            }
+            resetBars(){
+                this.barsLength = 0
+                barsCont.innerHTML = ''
             }
 
             createSmoke(scene){

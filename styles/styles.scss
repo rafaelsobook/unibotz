@@ -782,3 +782,124 @@ $morp: "Metamorphous", cursive;
   bottom: -1px;
   left: 14px;
 }
+
+// CHARGING FIRE STYLES
+.charge-container {
+  position: fixed;
+  top: -10px;
+  right: 0;
+  z-index: 5;
+  width: 32%;
+  height: 200px;
+  background: transparent;
+  display: none;
+}
+.cc-line {
+  background: #330505;
+  position: absolute;
+  border: none;
+}
+.cc-line:nth-child(1) {
+  width: 40%;
+  height: 6px;
+  top: 15.8%;
+  right: -5px;
+  border-radius: 2px;
+  filter: blur(0.5px);
+  border: 2px solid black;
+}
+.cc-line:nth-child(2) {
+  width: 9%;
+  height: 35px;
+  top: 18%;
+  right: -20px;
+  border-radius: 2px;
+  transform: skew(-40deg);
+  filter: blur(0.5px);
+  z-index: 9;
+}
+.cc-line:nth-child(3) {
+  width: 45%;
+  height: 15px;
+  top: 30%;
+  right: -5px;
+  border-radius: 2px;
+  transform: skew(-40deg);
+  filter: blur(0.5px);
+  border: 2px solid black;
+  border-left: 5px solid #000;
+  z-index: 6;
+}
+
+.cc-line:nth-child(4) {
+  top: 35%;
+  right: -10px;
+  width: 50px;
+  height: 30px;
+  border-left: 4px solid black;
+}
+.cc-line:nth-child(5) {
+  top: 36.6%;
+  right: -24px;
+  width: 50px;
+  height: 60px;
+  border-left: 4px solid black;
+  transform: rotate(-45deg);
+}
+.cc-line:nth-child(6) {
+  top: 44%;
+  right: 5px;
+  width: 45px;
+  height: 45px;
+  border: 3px solid black;
+  transform: rotate(-45deg);
+  border-radius: 50%;
+}
+.cc-line:nth-child(7) {
+  top: 43%;
+  right: 12px;
+  width: 5px;
+  height: 18px;
+  transform: rotate(50deg);
+  border-radius: 20px;
+  background: black;
+  filter: blur(1.2px);
+}
+.cc-line:nth-child(8) {
+  top: 43%;
+  right: 25px;
+  width: 5px;
+  height: 14px;
+  border-radius: 20px;
+  background: black;
+  filter: blur(1.2px);
+}
+.cc-line:nth-child(9) {
+  top: 53.1%;
+  right: 23px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: black;
+  filter: blur(0.9px);
+}
+.cc-line:nth-child(10) {
+  top: 21.2%;
+  right: 2.8%;
+  width: 40%;
+  height: 15px;
+  background: transparent;
+  filter: blur(0.9px);
+  transform: skew(-40deg);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+.bar {
+  height: 14px;
+  width: 16px;
+  background: red;
+  margin-left: 4px;
+  filter: blur(0.5px);
+  transform: skew(1deg);
+}
