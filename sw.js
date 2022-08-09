@@ -12,18 +12,18 @@ self.addEventListener('activate', e => {
 })
 
 self.addEventListener('fetch', e => {
-    if(e.request.method === "POST" || e.request.method === "PATCH") return console.log("patch and put request is returned")
-    e.respondWith(
+    // if(e.request.method === "POST" || e.request.method === "PATCH") return console.log("patch and put request is returned")
+    // e.respondWith(
         
-        fetch(e.request)
-        .then( allReq => {
-            const resClone = allReq.clone();
+    //     fetch(e.request)
+    //     .then( allReq => {
+    //         const resClone = allReq.clone();
 
-            caches.open(version).then(cache => {
-                cache.put(e.request, resClone)
-            })
+    //         caches.open(version).then(cache => {
+    //             cache.put(e.request, resClone)
+    //         })
 
-            return allReq
-        }).catch( () => caches.match(e.request))
-    )
+    //         return allReq
+    //     }).catch( () => caches.match(e.request))
+    // )
 })
