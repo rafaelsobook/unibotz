@@ -131,7 +131,6 @@
         </div>
     </div>
 
-    <!-- Charging of weapon -->
     <div class="charge-container">
         <div class="cc-line"></div>
         <div class="cc-line"></div>
@@ -146,6 +145,19 @@
         </div>
     </div>
 
+    <div class="engine-sett">
+        <div class="es-left">
+            <img src="./images/settings/reboot.png" alt="" class="el-img boot">
+            <img src="./images/settings/energy.png" alt="" class="el-img energ">
+            <img src="./images/settings/n2.png" alt="" class="el-img n2">
+        </div>
+        <div class="es-right" id="engsettingBtn">
+            <img src="./images/settings/engine.png" alt="" class="e-img">
+        </div>
+    </div>
+
+    <div id="arcam">cam</div>
+
     <!-- SIGNS -->
     <div class="warning-sign">
         <div class="ws-bx">
@@ -159,13 +171,10 @@
         </div>
     </div>
 
-
-
-
     <script type="text/javascript">
         if('serviceWorker' in navigator){
             window.addEventListener('load', e => {
-            navigator.serviceWorker.register('sw.js')
+             navigator.serviceWorker.register('sw.js')
             })
         }
     </script>

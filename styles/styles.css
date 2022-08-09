@@ -1248,12 +1248,139 @@ body {
 
 .bar {
   height: 14px;
-  width: 16px;
+  width: 10%;
   background: red;
   margin-left: 4px;
   -webkit-filter: blur(0.5px);
           filter: blur(0.5px);
   -webkit-transform: skew(1deg);
           transform: skew(1deg);
+}
+
+.engine-sett {
+  position: fixed;
+  bottom: 21%;
+  right: 3%;
+  width: 30%;
+  height: 100px;
+  z-index: 5;
+  display: none;
+  -webkit-box-pack: end;
+      -ms-flex-pack: end;
+          justify-content: flex-end;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+
+.es-right {
+  position: relative;
+  height: 50px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  width: 50px;
+  cursor: pointer;
+  -webkit-filter: invert(1);
+          filter: invert(1);
+  opacity: 0.8;
+}
+
+.es-right:active {
+  height: 50px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  width: 50px;
+  cursor: pointer;
+  -webkit-transform: scale(0.9);
+          transform: scale(0.9);
+  z-index: 7;
+  -webkit-filter: invert(1);
+          filter: invert(1);
+  opacity: 0.4;
+}
+
+.es-left {
+  position: relative;
+  padding: 8px 5px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  gap: 20px;
+  -webkit-filter: blur(0.4px);
+          filter: blur(0.4px);
+  border-radius: 5px;
+  -webkit-transform: translateX(600px);
+          transform: translateX(600px);
+  opacity: 0;
+  -webkit-transition: 0.5s;
+  transition: 0.5s;
+  z-index: 5;
+}
+
+.e-img {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.el-img {
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  -webkit-filter: invert(1) blur(0.7px);
+          filter: invert(1) blur(0.7px);
+}
+
+.n2 {
+  -webkit-transform: rotate(-15deg);
+          transform: rotate(-15deg);
+}
+
+.el-img:active {
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  -webkit-filter: invert(1) blur(0.7px);
+          filter: invert(1) blur(0.7px);
+  -webkit-transform: scale(0.9);
+          transform: scale(0.9);
+}
+
+.es-left-active {
+  -webkit-transform: translateX(-30px);
+          transform: translateX(-30px);
+  -webkit-transition: 0.5s;
+  transition: 0.5s;
+  opacity: 1;
+}
+
+#arcam {
+  position: fixed;
+  top: 3%;
+  z-index: 99;
+  left: 50%;
+  color: white;
+  cursor: pointer;
+  padding: 10px;
 }
 /*# sourceMappingURL=styles.css.map */
