@@ -1,7 +1,7 @@
-        import BABYLON from './_snowpack/pkg/babylonjs.js'
-        import "./_snowpack/pkg/babylonjs-loaders.js";
-        import io from "./_snowpack/pkg/socket.io-client.js"
-        import * as GUI from './_snowpack/pkg/babylonjs-gui.js';
+        import BABYLON from 'babylonjs'
+        import "babylonjs-loaders";
+        import io from "socket.io-client"
+        import * as GUI from 'babylonjs-gui';
         // import * as cannon from 'cannon'
         // import { CannonJSPlugin } from "babylonjs";
         // window.CANNON = cannon
@@ -54,8 +54,6 @@
         const passd = document.getElementById("passd")
 
         const characName = document.getElementById("characName")
-
-
         // divs to hide and show
         const introHome = document.querySelector(".intro-home")
         const introCont = document.querySelector(".intro-cont")
@@ -112,7 +110,7 @@
             }
         }
         
-        const {ParticleSystem, ActionManager, ExecuteCodeAction, GlowLayer, PointLight, Engine, Scene, ArcRotateCamera, HemisphericLight,DirectionalLight, Vector3, MeshBuilder, FreeCamera, SceneLoader, Color3, StandardMaterial} = BABYLON
+        const {Matrix, ParticleSystem, ActionManager, ExecuteCodeAction, GlowLayer, PointLight, Engine, Scene, ArcRotateCamera, HemisphericLight,DirectionalLight, Vector3, MeshBuilder, FreeCamera, SceneLoader, Color3, StandardMaterial} = BABYLON
         
         let xcor //coordinates ng joystick sa world axis
         let zcor //coordinates ng joystick sa world axis
@@ -137,6 +135,7 @@
                 this._machinez = []
                 this._bulletz = [] // for action purpose only
                 this._myMechDet = null // body core isMoving id
+                this._isCharging = false
 
                 this._canPress = false
                 this._canFire = true
@@ -146,6 +145,7 @@
                 this.deductEn = .009
                 this.devSpeed = .001
                 this.barsLength = 0
+                this.energenSpd = 0.04
 
                 // ACTIONS RELATED
                 this._willFireTimeOut //timeout to na kelangan i clear pag kikilos ka para di mag release yung bala
@@ -154,15 +154,12 @@
                 // mode
                 if(window.innerHeight < 600){
                     this._desktopMode = false
-                    
                 }else{
                     this._desktopMode = true
-                    
                 }
                 
                 log('desktop mode ? ' + this._desktopMode)
                 
-            
                 this._main()
             }
             async updUIStatus(botdet, socket){
@@ -710,7 +707,7 @@
                 const light = new HemisphericLight("fieldLight", new Vector3(0,1,0), scene)
 
                 const gl = new BABYLON.GlowLayer("glow", scene);
-                gl.intensity = 2;
+                gl.intensity = 1.3;
                 // creation of fire bullet
                 const fireBulletJson = {"name":"CPU particle system","id":"default system","capacity":10000,"disposeOnStop":false,"manualEmitCount":-1,"emitter":[0,0,0],"particleEmitterType":{"type":"ConeParticleEmitter","radius":0.1,"angle":0.7853981633974483,"directionRandomizer":0,"radiusRange":1,"heightRange":1,"emitFromSpawnPointOnly":false},"texture":{"tags":null,"url":"https://assets.babylonjs.com/textures/flare.png","uOffset":0,"vOffset":0,"uScale":1,"vScale":1,"uAng":0,"vAng":0,"wAng":0,"uRotationCenter":0.5,"vRotationCenter":0.5,"wRotationCenter":0.5,"homogeneousRotationInUVTransform":false,"isBlocking":true,"name":"https://assets.babylonjs.com/textures/flare.png","hasAlpha":false,"getAlphaFromRGB":false,"level":1,"coordinatesIndex":0,"coordinatesMode":0,"wrapU":1,"wrapV":1,"wrapR":1,"anisotropicFilteringLevel":4,"isCube":false,"is3D":false,"is2DArray":false,"gammaSpace":true,"invertZ":false,"lodLevelInAlpha":false,"lodGenerationOffset":0,"lodGenerationScale":0,"linearSpecularLOD":false,"isRenderTarget":false,"animations":[],"invertY":true,"samplingMode":3,"_useSRGBBuffer":false},"isLocal":false,"animations":[],"beginAnimationOnStart":false,"beginAnimationFrom":0,"beginAnimationTo":60,"beginAnimationLoop":false,"startDelay":0,"renderingGroupId":0,"isBillboardBased":true,"billboardMode":7,"minAngularSpeed":0,"maxAngularSpeed":0,"minSize":1,"maxSize":1.1,"minScaleX":1,"maxScaleX":1,"minScaleY":1,"maxScaleY":1,"minEmitPower":2,"maxEmitPower":2,"minLifeTime":0.09,"maxLifeTime":0.12,"emitRate":70,"gravity":[0,0,0],"noiseStrength":[10,10,10],"color1":[0.16470588235294117,0.00392156862745098,0.00392156862745098,1],"color2":[0.2627450980392157,0.12156862745098039,0,1],"colorDead":[0.16862745098039217,0,0,1],"updateSpeed":0.032,"targetStopDuration":0,"blendMode":0,"preWarmCycles":0,"preWarmStepOffset":1,"minInitialRotation":0,"maxInitialRotation":0,"startSpriteCellID":0,"spriteCellLoop":true,"endSpriteCellID":0,"spriteCellChangeSpeed":1,"spriteCellWidth":0,"spriteCellHeight":0,"spriteRandomStartCell":false,"isAnimationSheetEnabled":false,"textureMask":[1,1,1,1],"customShader":null,"preventAutoStart":false}
                 const fBulletSys = ParticleSystem.Parse(fireBulletJson, scene, "")
@@ -724,8 +721,9 @@
                 fexpSys.stop()
                 fBigExpSys.stop()
 
+                // cloning this for performance
                 const smokeSys = this.createSmoke(scene)
-                const bulletBx = BABYLON.MeshBuilder.CreateBox('bull', {size: .3}, scene)
+                const bulletBx = BABYLON.MeshBuilder.CreateBox('bull', {size: .3, height: .6}, scene)
                 bulletBx.isVisible = false
                 
                 const wallz = await this.createCliffSmall(scene)
@@ -736,12 +734,14 @@
                 fieldGround.parent = null
                 fieldGround.name = "ground"
 
+                const chargers = await this.createChargerz(scene)
+
                 socket.emit("join", ({_id: this._user._id, botdet: this._botDet}))
                 let findMineInterval
 
                 socket.on('userJoined', data => {
                     data.forEach(dat => {
-                        this.createBot(dat.botdet, scene, smokeSys, wallz, mechWallz)
+                        this.createBot(cam, dat.botdet, scene, smokeSys, wallz, mechWallz, chargers)
                     })
                 })
                 const bx = new MeshBuilder.CreateBox("bx", {height: .5, width: 1, depth: .6}, scene)
@@ -753,22 +753,12 @@
                         const myMechDet = this._machinez.find(mech => mech._id === this._botDet._id)
                         this._myMechDet = myMechDet
                         this._hideLS()
-                        const mechCor = scene.getMeshByName(`core.${this._botDet._id}`)
-                        const cor = mechCor.getAbsolutePosition()
-                        cam.setTarget(myMech)
-                        log(myMech)
-                        if(!this._desktopMode) {
-                            cam.alpha = -Math.PI/2;
-                            cam.beta = .8
-                            cam.radius = 18
-                            cam.lowerRadiusLimit = 18
-                            log("camera setup to mobile mode")
-                        }
-                        this._canPress = true
-                        const {x,y,z} = myMech.position
-                        bx.position = new Vector3(x,.25,z)
                         
-                        bx.locallyTranslate(new Vector3(0,0,2))
+                        this._canPress = true
+                        // const {x,y,z} = myMech.position
+                        // bx.position = new Vector3(x,.25,z)
+                        
+                        // bx.locallyTranslate(new Vector3(0,0,2))
                         log("Found My Mech", this._myMechDet)
                         clearInterval(findMineInterval)
                         const percent = (this._botDet.dmgTaken/this._botDet.durability) * 100
@@ -777,30 +767,24 @@
                                 this._showWarnDeath(3000)
                             }, 3000)
                         }
-
-                        this._barsInterval = setInterval( () => {
-                            if(this.barsLength >= 5) return
-                            this.createBar()
-                            this.barsLength++
-                        }, 1500)
                     }else{
                         log("first loop of interval, bot not found")
                     }
-                }, 1000)
+                }, 2000)
 
-                let ml = 0
-                let mr = 0
-                let mf = 0
-                let mb = 0
-                let canMove = true
-                let moveInt = 0
+                this._barsInterval = setInterval( () => {
+                    if(this.barsLength >= 5) return
+                    this.createBar()
+                    this.barsLength++
+                }, 1500)
+
                 scene.actionManager = new ActionManager(scene)
                 scene.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnKeyDownTrigger, e => {
                     if(!this._canPress) return log("not yet allowed to move")
                     const keyp = e.sourceEvent.key.toLowerCase()
                     let bxDir
                     const moveFunc = () => {
-                        cam.lowerRadiusLimit += 1
+                        
                         this._canFire = false
                         this._clearAllCurrentAnim()
                         const {x,z} = this._myMechDet.body.position
@@ -857,7 +841,7 @@
                     const kepress = e.sourceEvent.key.toLowerCase()
 
                     if(kepress === "w" || kepress === "a" || kepress === "d" || kepress === "s"){
-                        cam.lowerRadiusLimit -= 1
+                        
                         this._canFire = true
                         const bxDir = bx.getAbsolutePosition()
                         const myBody = scene.getMeshByName(`Body.${this._botDet._id}`)
@@ -920,6 +904,13 @@
                     //         camTarg.locallyTranslate(new Vector3(0,0,.1))
                     //     }
                     // }
+                    if(this._isCharging && this._botDet.energy < this._botDet.maxEnergy-1){
+                        this._botDet.energy += this.energenSpd
+                        this.updateEnergy(this._botDet)
+                       
+                    }
+                    
+                   
                     if(!this._bulletz.length) return
                     this._bulletz.forEach(bullet => {
                         bullet.body.locallyTranslate(new Vector3(0,-.03,bullet.speed))
@@ -1212,7 +1203,7 @@
             }
 
             // creations
-            async createBot(botdet, scene, smokeSys, wallz, mechWallz){
+            async createBot(cam, botdet, scene, smokeSys, wallz, mechWallz, chargers){
                 const isCreated = scene.getMeshByName(`Body.${botdet._id}`);
                 if(isCreated) return log(`User ${botdet._id} is already created !`)
 
@@ -1239,7 +1230,48 @@
                 const {x,z} = botdet
                 log(botdet)
                 body.position = new Vector3(x,1.2,z)
-               
+
+                if(this._botDet._id === botdet._id && !this._desktopMode){
+                    cam.setTarget(body)
+                    cam.alpha = -Math.PI/2;
+                    cam.beta = .5
+                    cam.radius = 18
+                    cam.lowerRadiusLimit = 18
+                    
+                    log("camera setup to mobile mode")
+                
+                }
+                if(this._botDet._id === botdet._id && this._desktopMode){
+                    cam.setTarget(body)
+                    log("camera desktop mode")
+                
+                }
+                if(this._botDet._id === botdet._id){
+                    chargers.forEach(charger => {
+                        charger.isVisible = false
+                        charger.actionManager.registerAction(new ExecuteCodeAction(
+                            {
+                                trigger: ActionManager.OnIntersectionEnterTrigger,
+                                parameter: body
+                            }, e => {
+                                this._isCharging = true
+                                log("charging " + this._isCharging)
+                            }
+                        ))
+
+                        charger.actionManager.registerAction(new ExecuteCodeAction(
+                            {
+                                trigger: ActionManager.OnIntersectionExitTrigger,
+                                parameter: body
+                            }, e => {
+                                this._isCharging = false
+                                log("charging " + this._isCharging)
+                            }
+                        ))
+                    })
+                
+                }
+
                 mechWallz.forEach(mech => {
                     
                     mech.actionManager.registerAction(new ExecuteCodeAction(
@@ -1373,7 +1405,42 @@
                 nameMesh.parent = core
                 nameMesh.position = new Vector3(0,posY,0)
             }
+            async createChargerz(scene){
+                let chargerz = []
+                const bx = MeshBuilder.CreateBox(`chargg.${Math.random}ing`, {size: 3}, scene)
+                bx.actionManager = new ActionManager(scene)
 
+                const {meshes} = await SceneLoader.ImportMeshAsync("charger", "./modelz/", "charger.glb", scene)
+
+                const charger = BABYLON.Mesh.MergeMeshes([meshes[1], meshes[2]], true, true, undefined, false, true);
+                charger.showBoundingBox = false
+
+                const bx2 = bx.clone(`charging.${Math.random}`); bx2.actionManager = new ActionManager(scene)
+                const bx3 = bx.clone(`charging.${Math.random}`); bx3.actionManager = new ActionManager(scene)
+                const bx4 = bx.clone(`charging.${Math.random}`); bx4.actionManager = new ActionManager(scene)
+
+                const fins = new Matrix.Translation(-10,.2,10); bx.position = new Vector3(-10,1,10);
+                const sins = new Matrix.Translation(10,.2,5); bx2.position = new Vector3(10,1,5);
+                const thr = new Matrix.Translation(1,.2,5); bx3.position = new Vector3(1,1,5);
+                const fourIns = new Matrix.Translation(1,.2,-10); bx4.position = new Vector3(1,1,-10);
+
+                charger.thinInstanceAdd(fins)
+                charger.thinInstanceAdd(sins)
+                charger.thinInstanceAdd(thr)
+                charger.thinInstanceAdd(fourIns)
+
+                charger.thinInstanceSetMatrixAt(charger, fins)
+                charger.thinInstanceSetMatrixAt(charger, sins)
+                charger.thinInstanceSetMatrixAt(charger, thr)
+                charger.thinInstanceSetMatrixAt(charger, fourIns)
+
+                chargerz.push(bx)
+                chargerz.push(bx2)
+                chargerz.push(bx3)
+                chargerz.push(bx4)
+
+                return chargerz
+            }
             async createCliffSmall(scene){
                 const posY = 0
                 let wallz = []
@@ -1454,10 +1521,8 @@
                 const Circle = await SceneLoader.ImportMeshAsync("", "./modelz/", "circ.glb", scene)
                 const circ = Circle.meshes[0].getChildren()[0]
                 circ.parent = null
-                circ.name = 'bigwall'
+                circ.name = 'Circ'
                 circ.position = new Vector3(0,0,0)
-                
-                circ.checkCollisions = true
                 circ.isVisible = true
                 
 
