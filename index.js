@@ -124,6 +124,7 @@
         let userId
         let curPos
         let canPress = true // for moving or firing
+        let botMoving = false
         class App {
 
             constructor(isHaveBot, data) {
@@ -209,6 +210,7 @@
                 fireBtn.addEventListener("click", e => {
                     if(!canPress) return log("your canPress is false")
                     if(!this._canPress) return log("your this._canPress is false")
+                    
                     this._fire(socket)
                 })
 
@@ -458,12 +460,14 @@
                         leftThumbContainer.alpha = 0.3;
                         leftPuck.alpha = 1
 
-         
+                        botMoving = true
             
                     });
             
                     leftThumbContainer.onPointerUpObservable.add(function(coordinates) {
+                        botMoving = false
                         if(!canPress) return log("your canPress is false")
+                        
                         xAddPos = 0;
                         yAddPos = 0;
                         leftPuck.isDown = false;
@@ -484,7 +488,7 @@
                         if(!canPress) return log("your canPress is false")
                         if (leftPuck.isDown) {
 
-                            
+                                botMoving = true
                                 xAddPos = coordinates.x-(leftThumbContainer._currentMeasure.width*.5)-sideJoystickOffset;
                                 yAddPos = adt._canvas.height - coordinates.y-(leftThumbContainer._currentMeasure.height*.5)+bottomJoystickOffset;
                                 leftPuck.floatLeft = xAddPos;
@@ -692,21 +696,6 @@
 
             }
 
-            activateCamSetup(cam, body){
-                const camSetupBtn = document.getElementById("arcam")
-
-                camSetupBtn.addEventListener("click", () => {
-                    cam.setTarget(body)
-                    cam.alpha = -Math.PI/2;
-                    cam.beta = .5
-                    cam.radius = 18
-                    cam.lowerRadiusLimit = 18
-                    
-                    log("camera re setup complete")
-                })
-            
-            }
-
             async _goToField(socket){
 
                 this._showLoadingScreen()
@@ -792,10 +781,11 @@
                 })
                 const bx = new MeshBuilder.CreateBox("bx", {height: .5, width: 1, depth: .6}, scene)
                 bx.isVisible = false
-
+                let isCamSetting = false
                 findMineInterval = setInterval( () => {
                     const myMech = scene.getMeshByName(`Body.${this._botDet._id}`)
                     if(myMech){
+                        isCamSetting = true
                         const myMechDet = this._machinez.find(mech => mech._id === this._botDet._id)
                         this._myMechDet = myMechDet
                         this._hideLS()
@@ -807,6 +797,10 @@
                         // bx.locallyTranslate(new Vector3(0,0,2))
                         log("Found My Mech", this._myMechDet)
                         clearInterval(findMineInterval)
+                        setTimeout( () => {
+                            isCamSetting = false
+                            log("cam setup finished")
+                        }, 20000)
                         const percent = (this._botDet.dmgTaken/this._botDet.durability) * 100
                         if(percent > 75){
                             setTimeout( () => {
@@ -916,12 +910,13 @@
                         this._fire(socket)
                     }
                 }
-
+                let setInt = 0
                 const toRender = () => {
 
                     if(cam.upperRadiusLimit <= 20){
                         cam.upperRadiusLimit += 0.03
                     }
+                    
                     if(!this._machinez.length) return
                     if(!this._desktopMode){
                         const myMech = scene.getMeshByName(`Body.${this._botDet._id}`)
@@ -933,6 +928,15 @@
                         bodyx = bxAbsPos.x// bx po too lookat
                         bodyz = bxAbsPos.z // bx po too lookat
                         curPos = {x,z} // my bod pos
+                        if(isCamSetting){
+                            cam.setTarget(myMech)
+                            cam.alpha = -Math.PI/2;
+                            cam.beta = .5
+                            cam.radius = 18
+                            cam.lowerRadiusLimit = 18
+                            setInt++
+                            log("cam setting ..." + setInt)
+                        }
                     }
                     this._machinez.forEach(mech => {
                         if(mech.isMoving) {
@@ -949,7 +953,6 @@
                         log("charging ...")
                         
                     }
-                    log(this._botDet.energy)
                    
                     if(!this._bulletz.length) return
                     this._bulletz.forEach(bullet => {
@@ -1199,6 +1202,7 @@
                 clearTimeout(this._willFireTimeOut) // it will stop the firebx to be created
             }
             _fire(socket){
+                if(botMoving) return log("desktop mode in normal fire you cant fire while moving")
 
                 socket.emit("fireAnim", this._botDet._id) // animation lang ng mesh to
                 
@@ -1308,7 +1312,7 @@
                             }
                         ))
                     })
-                    this.activateCamSetup(cam, body)
+                   
                 }
 
                 mechWallz.forEach(mech => {
