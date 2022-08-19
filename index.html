@@ -59,7 +59,6 @@
                     <label for="country">Current Country</label>
                     <input type="text" id="country" class="sgn-up-inp" />
                 </div>
-                <br />
                 <p class="sgn-cap">Security Details</p>
                 <div class="sec-cont">
                     <div class="inp-bx">
@@ -91,6 +90,24 @@
         <img src="./images/settings/menu.png" alt="" class="lc-img">
         <p class="lc-cap">Loading</p>
     </div>
+
+    <!-- GUI IN GOTOSTART -->
+    <button class="shop-btn">SHOW SHOP</button>
+    <div class="shop_cont shopclose">
+        <div class="sc-choices">
+            <h3 class="sc-label">Available Recourse</h3>
+            <ul class="sc-ul"><p class="sc-li arm">Arms</p><p class="sc-li headz">Heads</p><p class="sc-li weapons">Weapons</p></ul>
+        </div>
+        <div class="sc-lists">
+            <!-- <div class="scl-bx">
+                <img src="./images/shop/destroyer.png" alt="" class="shop-img">
+                <p class="item-name">Destroyer</p>
+                <button class="buy-btn">2400</button>
+            </div> -->
+        </div>
+    </div>
+
+
     <!-- CREATING BOTS GUI RELATED -->
     <div class="create-bot-container">
         <div class="cb-bx hdbx" id="hdzList">
@@ -168,6 +185,23 @@
             </div>
             <p class="ws-cap">Warning ! severe damage detected</p>
         </div>
+    </div>
+
+    <div class="admin-page">
+        <form class="ap-cont" id="monsForm">
+            <div class="apbx">
+                <input type="text" id="monstype" name="type" class="ap-inp" placeholder="Type" />
+                <input type="number" id="xloc" name="xloc" class="ap-inp" placeholder="X Loc" />
+                <input type="number" id="zloc" name="zloc" class="ap-inp" placeholder="Z Loc" />
+            </div>
+            <div class="apbx">
+                <input type="text" id="monsname" name="monsname" class="ap-inp" placeholder="Monster Name" />
+                <input type="text" id="loot" name="loot" class="ap-inp" placeholder="Loot" />
+                <input type="Number" id="monsdmg" name="dmg" class="ap-inp" placeholder="Damage" />
+                <input type="Number" id="monshp" name="hp" class="ap-inp" placeholder="HP" />
+            </div>
+            <button id="monsBtn">Create Monster</button>
+        </form>
     </div>
 
     <script type="text/javascript">

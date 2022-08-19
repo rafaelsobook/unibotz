@@ -77,8 +77,12 @@
         const botNameInp = document.getElementById("botnameinp")
 
         // HOME GUI
-        const homeCont = document.querySelector(".home-container")
+        const homeCont = document.querySelector(".home-container") // yung Launch button
         const launchBtn = document.getElementById("startBtn")
+        const shopList = document.querySelector(".sc-ul")
+        const shopCont = document.querySelector(".shop_cont")
+        const scInner = document.querySelector(".sc-lists")
+        const shopBtn =  document.querySelector(".shop-btn")
 
         // FIELD GUI
         const fireBtn = document.querySelector('.fire-btn')
@@ -94,10 +98,13 @@
 
         // warnsign
         const warnSign = document.querySelector('.warning-sign')
+        // admin page
+        const monsBtn = document.getElementById("monsBtn")
         
 
         const log = console.log
         const apiURL = 'https://universalbots.herokuapp.com'
+        // const apiURL = 'http://localhost:8100'
         const apiOpt = (meth, toPost) => {
             return {
                 method: meth, // *GET, POST, PUT, DELETE, etc.
@@ -113,6 +120,7 @@
                 body: toPost ? JSON.stringify(toPost) : ''
             }
         }
+    
         
         const {Matrix, ParticleSystem, ActionManager, ExecuteCodeAction, GlowLayer, PointLight, Engine, Scene, ArcRotateCamera, HemisphericLight,DirectionalLight, Vector3, MeshBuilder, FreeCamera, SceneLoader, Color3, StandardMaterial} = BABYLON
         
@@ -138,6 +146,7 @@
 
                 this._playerz = []
                 this._machinez = []
+                this._bounced = []
                 this._bulletz = [] // for action purpose only
                 this._myMechDet = null // body core isMoving id
                 this._isCharging = false
@@ -148,7 +157,7 @@
                 this._camTargCollided = true
 
                 this.deductEn = .009
-                this.devSpeed = .001
+                this.devSpeed = 0
                 this.barsLength = 0
                 this.energenSpd = 0.04
 
@@ -156,6 +165,12 @@
                 this._willFireTimeOut //timeout to na kelangan i clear pag kikilos ka para di mag release yung bala
                 this._canFireTimeOut // eto naman kada baril mo iclear niya yung timeout na to kase etong timeout na to e pang canpress = true
                 this._barsInterval // interval ng bars kada 1.5sec nag increase
+                
+                // AI
+                this.monsterz = []
+                this.bugspd = .07   
+                
+                
                 // mode
                 if(window.innerHeight < 600){
                     this._desktopMode = false
@@ -165,6 +180,10 @@
                 
                 log('desktop mode ? ' + this._desktopMode)
                 
+                if(data.details.isAdmin){
+                    this._goToAdminField()
+                    return log("Admin Detected")
+                }
                 this._main()
             }
             async updUIStatus(botdet, socket){
@@ -180,7 +199,7 @@
                     socket.emit('smoke', botdet._id)
                     const response = await fetch(`${apiURL}/bots/bodysmoke/${botdet._id}`, apiOpt('PATCH'))
                     const data = await response.json()
-                    this._botDet = data
+                    
                 }else{
                     log("your bot received damage")
                 }
@@ -201,6 +220,7 @@
                 }, 2000)
             }
             setEventListeners(socket){
+                
                 launchBtn.addEventListener("click", e => {
                     this._hideHomeGui()
                     this._goToField(socket)
@@ -233,6 +253,56 @@
                         log("boot")
                     }
                     log(targ)
+                })
+                shopBtn.addEventListener("click", e => {
+                    if(shopCont.className.includes("shopclose")){
+                        shopCont.classList.remove("shopclose")
+                    }else{
+                        shopCont.classList.add("shopclose")
+                    }
+                })
+                //  SHOP LISTS WILL FETCH THE ITEMS
+                shopList.addEventListener("click", async e => {
+                    const targName = e.target.className.split(" ")[1]
+        
+                    if(e.target.className === "sc-ul") return log("I click sc-ul")
+                    e.target.parentElement.childNodes.forEach(elem => {
+                        
+                        if(elem.className.includes("scactive")){
+                            elem.classList.remove("scactive")
+                        }
+                    })
+                    log(e.target.parentElement.childNodes)
+                    if(targName !== 'sc-label') e.target.classList.add("scactive")
+                    scInner.innerHTML = ""
+        
+                    const response = await fetch(`${apiURL}/shopitems`)
+                    const data = await response.json()
+        
+                    if(!data) return log("problem fetching shop items")
+                    data.forEach(det => {
+                        if(det.type !== targName) return log(`not a ${targName}`)
+                        const newDiv = document.createElement("div")
+                        newDiv.className = `scl-bx ${det._id}`
+        
+                        const newImg = document.createElement("img")
+                        newImg.className = 'shop-img'
+                        newImg.src = `./images/shop/${det.itemName}.png`
+                        newDiv.append(newImg)
+        
+        
+                        const newP = document.createElement("p")
+                        newP.className = "item-name"
+                        newP.innerHTML = det.itemName
+                        newDiv.append(newP)
+        
+                        const newButt = document.createElement("button")
+                        newButt.className = "buy-btn"
+                        newButt.innerHTML = `${det.price}$`
+                        newDiv.append(newButt)
+        
+                        scInner.append(newDiv)
+                    })
                 })
             }
             _showLoadingScreen(dura){
@@ -373,9 +443,13 @@
             }
             _showHomeGui(){
                 homeCont.style.display = "block"
+                shopBtn.style.display = "block"
+                
             }
             _hideHomeGui(){
                 homeCont.style.display = "none"
+                shopBtn.style.display = "none"
+                shopCont.classList.add("shopclose")
             }
             _showFieldUI(){
                 fireBtn.style.display = "block"
@@ -524,6 +598,40 @@
                     return
             }
 
+            _goToAdminField(){
+
+                this._hideHomeGui()
+                this._hideFieldUI()
+                
+                log("Admin Field")
+                const adminField = document.querySelector(".admin-page")
+                adminField.style.display = "flex"
+                const socket = io(webSocketURL)
+                const monstype = document.getElementById("monstype")
+                const xloc = document.getElementById("xloc")
+                const zloc = document.getElementById("zloc")
+                const monsname = document.getElementById("monsname")
+                const loot = document.getElementById("loot")
+                const monsdmg = document.getElementById("monsdmg")
+                const monshp = document.getElementById("monshp")
+
+                monsBtn.addEventListener("click", e => {
+                    e.preventDefault()
+                    const data = {
+                        monsId: Math.random().toString().split(".")[1],
+                        monstype: monstype.value,
+                        xloc: xloc.value,
+                        zloc: zloc.value,
+                        monsname: monsname.value,
+                        loot: loot.value,
+                        monsdmg: monsdmg.value,
+                        monshp: monshp.value,
+                        maxhp: monshp.value
+                    }
+                    
+                    socket.emit("admin", data)
+                })
+            }
             async _main() {
                 const socket = io(webSocketURL)
                 this.setEventListeners(socket) // all element buttons
@@ -655,7 +763,8 @@
                 
                 
                 meshes.forEach(mesh => {
-                    
+                    log(mesh.name)
+                    log(this._botDet)
                     if(mesh.name.includes(this._botDet.bodyType) || mesh.name.includes(this._botDet.headType)){
                         mesh.isVisible = true
                         log(mesh.name)
@@ -701,7 +810,8 @@
                 this._showLoadingScreen()
                 // will connect to socket
                 const scene = new Scene(this._engine)
-                
+                scene.clearColor = new Color3(0,0,0)
+
                 const cam = new ArcRotateCamera("fieldCam", Math.PI/2 + .3, .8, 9, new Vector3(0,5,0), scene)
                 // cam.attachControl(canvas, true)
                 // cam.panningDistanceLimit = .0001
@@ -758,10 +868,11 @@
 
                 // cloning this for performance
                 const smokeSys = this.createSmoke(scene)
-                const bulletBx = BABYLON.MeshBuilder.CreateBox('bull', {size: .3, height: .6}, scene)
+                const bulletBx = BABYLON.MeshBuilder.CreateBox('bull', {size: .5, height: .4, width: .7}, scene)
                 bulletBx.isVisible = false
                 
                 const wallz = await this.createCliffSmall(scene)
+                const Bigwalls = await this.createCliffBig(scene)
                 const mechWallz = await this.mechwalls(scene)
                 
                 const Ground = await SceneLoader.ImportMeshAsync("", "./modelz/", "fieldground.glb", scene)
@@ -774,10 +885,26 @@
                 socket.emit("join", ({_id: this._user._id, botdet: this._botDet}))
                 let findMineInterval
 
+                let intervl
                 socket.on('userJoined', data => {
-                    data.forEach(dat => {
-                        this.createBot(cam, dat.botdet, scene, smokeSys, wallz, mechWallz, chargers)
+                    data.uzers.forEach(dat => {
+                        this.createBot(cam, dat.botdet, scene, smokeSys, wallz, mechWallz, chargers, socket)
                     })
+                    clearInterval(intervl)
+                    intervl = setInterval(() => {
+                        if(this._machinez.length === data.uzers.length){
+                            if(data.monz.length){
+                                data.monz.forEach(mons => {
+                                    
+                                    this.createMons(mons, scene, socket)
+                                })
+                            }
+                            log(`PASSED ! machinez ${this._machinez.length} uzers ${data.uzers.length}`)
+                            clearInterval(intervl)
+                        }
+                        log(`running checking machinez ${this._machinez.length} on socketdata ${data.uzers.length}`)
+                    }, 1000)
+
                 })
                 const bx = new MeshBuilder.CreateBox("bx", {height: .5, width: 1, depth: .6}, scene)
                 bx.isVisible = false
@@ -824,7 +951,7 @@
                     const keyp = e.sourceEvent.key.toLowerCase()
                     let bxDir
                     const moveFunc = () => {
-                        
+                        cam.setTarget(this._myMechDet.body)
                         this._canFire = false
                         this._clearAllCurrentAnim()
                         const {x,z} = this._myMechDet.body.position
@@ -881,7 +1008,8 @@
                     const kepress = e.sourceEvent.key.toLowerCase()
 
                     if(kepress === "w" || kepress === "a" || kepress === "d" || kepress === "s"){
-                        
+                        const pos = this._myMechDet.body.position
+                        cam.setTarget(new Vector3(pos.x,pos.y,pos.z))
                         this._canFire = true
                         const bxDir = bx.getAbsolutePosition()
                         const myBody = scene.getMeshByName(`Body.${this._botDet._id}`)
@@ -942,9 +1070,36 @@
                         if(mech.isMoving) {
                             mech.body.lookAt(new Vector3(mech.dirTarg.x,mech.body.position.y, mech.dirTarg.z),0,0,0)
                            
-                            mech.body.locallyTranslate(new Vector3(0,0,0.08 + this.devSpeed))
+                            mech.body.locallyTranslate(new Vector3(0,0,mech.speed + this.devSpeed))
                            
                             mech.RootB.animations.forEach(anim => anim.name === "moving" && anim.play())
+                        }
+ 
+                    })
+                    this.monsterz.forEach(mon => {
+                        if(mon.isMoving){
+                            const bot = scene.getMeshByName(`Body.${mon.targId}`)
+                            
+                            if(bot){
+                                const {x,z} = bot.position
+                                mon.body.lookAt(new Vector3(x,mon.body.position.y,z),0,0,0)
+                                mon.body.locallyTranslate(new Vector3(0,0,this.bugspd))
+                                mon.spad.animations.forEach(anim => anim.name === "walking" && anim.play())
+                            }else{ log("bot not found ")}
+                            
+                        }
+                        if(!mon.isMoving && mon.isAttacking){
+                            const bot = scene.getMeshByName(`Body.${mon.targId}`)
+                            mon.spad.animations.forEach(anim => anim.name === "walking" && anim.stop())
+                            if(bot){
+                                const {x,z} = bot.position
+                                mon.body.lookAt(new Vector3(x,mon.body.position.y,z),0,0,0)
+                                
+                            }else{ 
+                                mon.isAttacking = false
+                                log("bot not found to attack ")
+                            }
+                            
                         }
                     })
                     if(this._isCharging && this._botDet.energy < this._botDet.maxEnergy-1){
@@ -953,7 +1108,7 @@
                         log("charging ...")
                         
                     }
-                   
+                    
                     if(!this._bulletz.length) return
                     this._bulletz.forEach(bullet => {
                         bullet.body.locallyTranslate(new Vector3(0,-.03,bullet.speed))
@@ -1012,7 +1167,7 @@
                     explosionSys.emitter = frbx
                     fSys.emitter = frbx
                     
-                    frbx.position = new Vector3(x,y + .4,z)
+                    frbx.position = new Vector3(x,y + .7,z)
                     frbx.lookAt(new Vector3(data.dirTarg.x, frbx.position.y,data.dirTarg.z), 0,0,0)
                     frbx.locallyTranslate(new Vector3(.4,0,2))
                     frbx.actionManager = new ActionManager(scene)
@@ -1052,7 +1207,59 @@
                         }
                         ))
                     })
+                    this.monsterz.forEach(mons => {
+                        frbx.actionManager.registerAction(new ExecuteCodeAction(
+                        {
+                            trigger: ActionManager.OnIntersectionEnterTrigger,
+                            parameter: mons.body
+                        }, e => {
+                            if(mons.monshp <= data.dmg){
+                                socket.emit("monsremove", mons.monsId)
+                                mons.initDeath()
+                                this.monsterz = this.monsterz.filter(themon => themon.monsId !== mons.monsId)
+                                log(this.monsterz)
+                                
+                                setTimeout( () => {
+                                    mons.body.dispose()
+                                    
+                                }, 5400)
+                                return
+                            }
+                            mons.monshp -= data.dmg
+                            log(`after deduction monshp ${mons.monshp} mydmg ${data.dmg}`)
+                            mons.spad.animations.forEach(anim => {
+                                if(anim.name === "walking") anim.stop()
+                                if(anim.name === "hit") anim.play()
+                            })
+                            // frbx.dispose()
+                            clearTimeout(toDisposeTimeOut) // may timeout kase to pag hinde tumama pero tumama kaya nag cleartimeout nako dito
+                            const newArr = this._bulletz.filter(bull => bull.botname !== frbx.name)
+                            this._bulletz = newArr
 
+                            frbx.setParent = mons.body
+                            fSys.stop()
+                            // electric particle system
+                            explosionSys.start()// naka dikit sa bala
+                            explosionSys.targetStopDuration = .5
+                            explosionSys.disposeOnStop = true
+                            
+                            explodeSound.play()
+
+                            // Explosion Partcle system
+                            const explosion = fBigExpSys.clone(`explosion.${Math.random()}`)
+                            const {x,z} = mons.body.getAbsolutePosition()
+                            explosion.emitter = new Vector3(x, frbx.position.y, z)
+                            explosion.start()
+                            explosion.targetStopDuration = 1.1
+                            explosion.disposeOnStop = true
+
+                            setTimeout(() => {
+                                frbx.dispose()
+                            }, 500)
+                            socket.emit("monshit", {monsId: mons.monsId, dmg: data.dmg})
+                        }
+                        ))
+                    })
                     wallz.forEach(wall => {
                         frbx.actionManager.registerAction(new ExecuteCodeAction(
                             {
@@ -1131,16 +1338,19 @@
                 socket.on("botIsHit", data => {
                     if(data.botId === this._botDet._id){
                         this._botDet.dmgTaken += data.dmg
-                        this._botDet.energy -= parseInt(data.dmg/3)
-                        
+                        log(`HITTED ${this._botDet.dmgTaken} ${this._botDet.durability}`)
                         // if the bot is destroyed
                         if(this._botDet.dmgTaken >= this._botDet.durability){
                             this.stop()
+                            this._hideFieldUI()
+                            this._canFire = false
                             socket.emit("explode", data.botId)
                              // deleting of bot
                              // updating users to haveBot false to restart in making
-                            this.updateDatabase(false,'DELETE',`bots/destroy/${data.botId}`)
-                            this.updateDatabase(false,'PATCH',`users/botdestroyed/${this._user._id}`)
+                             const dmgTakenVal = this._botDet.dmgTaken/this._botDet.durability * 100
+                             dmgTaken.innerHTML  = `${parseInt(dmgTakenVal)}%`
+
+                             this.updateDatabase(false,'DELETE',`bots/destroy/${data.botId}`)                            
                             
                             return
                         }
@@ -1170,16 +1380,80 @@
                     this._machinez.forEach(mach => {
                         if(mach._id === botId){
                             mach.isMoving = false
-                            mach.core.position.y += 20
+                            mach.core.position.y += 50
+                            mach.core.dispose()
+                            log("core is disposed !")
                             mach.RootB.animations.forEach(anim => anim.stop())
                             mach.RootB.animations.forEach(anim => {
                                 if(anim.name === "explode"){
                                     anim.play()
+                                }else{
+                                    anim.stop()
                                 }
                             })
                             setTimeout(() => {
                                 mach.body.dispose()
-                            }, 5000)
+                                const newArr = this._machinez.filter(mac => mac._id !== botId)
+                                this._machinez = newArr
+                            }, 4000)
+                        }
+                    })
+                    if(this._botDet._id === botId){
+                        setTimeout( () => window.location.reload, 4000)
+                    }
+                })
+
+                socket.on("botbounced", det => {
+                    
+                    const BotMesh = this._machinez.find(mech => mech._id === det.botId)
+                    if(!BotMesh) return log("not found Bot that hit the wall")
+                    BotMesh.isMoving = false
+
+                    BotMesh.body.locallyTranslate(new Vector3(0,0,-.5))
+                    BotMesh.RootB.animations.forEach(anim => {
+                        if(anim.name === "moving") anim.stop()
+                        if(anim.name === "wallhit"){
+                            anim.stop()
+                            anim.play()
+                        }
+                    })
+                })
+
+                // creating monster
+                socket.on('mkemons', data => {
+                    log("creating monster " + data.monstype)
+                    this.createMons(data,scene,socket)
+                })
+
+                socket.on("monsdetected", data => {
+                    this.monsterz.forEach(mon => {
+                        if(mon.monsId === data.monsId){
+                            mon.isMoving = true
+                            mon.targId = data.targId
+                        }
+                    })
+                })
+                socket.on("monstoped", data => {
+                    const newArr = this.monsterz.map(mon => mon.monsId === data.monsId ? {...mon, isMoving: false, isAttacking: false} : mon)
+                    this.monsterz = newArr
+                    log(this.monsterz)
+                })
+
+                socket.on('monattacked', data => {
+                    this.monsterz.forEach(mon => {
+                        if(mon.monsId === data.monsId){
+                            const bot = scene.getMeshByName(`Body.${data.targId}`)
+                            if(!bot) return log("the bot to attacked is not found !")
+                            const {x,z} = bot.position
+                            const bugweapon = scene.getMeshByName(`bugweapon.${data.monsId}`)
+                            if(!bugweapon) return log("did not found the weapon of bug")
+                            bugweapon.position = new Vector3(-.1,.33,0)
+                            mon.body.lookAt(new Vector3(x,mon.body.position.y,z),0,0,0)
+                            mon.targId = data.targId
+                            mon.isMoving = false
+                            mon.isAttacking = true
+                            mon.body.locallyTranslate(new Vector3(0,0,.1))
+                            mon.spad.animations.forEach(anim => anim.name === "attack" && anim.play())
                         }
                     })
                 })
@@ -1191,8 +1465,6 @@
 
                     const newArr = this._machinez.filter(mach => mach._id !== botId)
                     this._machinez = newArr
-
-                    
                 })
 
                 if(!this._desktopMode) this._makeJoyStick(socket)
@@ -1238,6 +1510,13 @@
             }
 
             async updateDatabase(body,meth,address){
+                if(!body){
+                    const response = await fetch(`${apiURL}/${address}`, apiOpt(meth))
+                    const data = await response.json()
+                    log(data)
+
+                    return data
+                }
                 const response = await fetch(`${apiURL}/${address}`, apiOpt(meth,body))
                 const data = await response.json()
                 log(data)
@@ -1246,7 +1525,7 @@
             }
 
             // creations
-            async createBot(cam, botdet, scene, smokeSys, wallz, mechWallz, chargers){
+            async createBot(cam, botdet, scene, smokeSys, wallz, mechWallz, chargers, socket){
                 const isCreated = scene.getMeshByName(`Body.${botdet._id}`);
                 if(isCreated) return log(`User ${botdet._id} is already created !`)
 
@@ -1314,36 +1593,22 @@
                     })
                    
                 }
+                const core = MeshBuilder.CreateBox(`core.${botdet._id}`, {height: 1.2, width: .9, depth: .9}, scene)
 
-                mechWallz.forEach(mech => {
-                    
-                    mech.actionManager.registerAction(new ExecuteCodeAction(
-                        {
-                            trigger: ActionManager.OnIntersectionEnterTrigger,
-                            parameter: body
-                        }, e => {
-                            log("i hit this body")
-                        }
-                    ))
-                })
-                const core = MeshBuilder.CreateBox(`core.${botdet._id}`, {height: 1.2, width: .6, depth: .6}, scene)
-                core.parent = body
                 core.position = new Vector3(0,-.5,0)
                 whenHit.attachToMesh(core)
                 fireShot.attachToMesh(core)
 
                 const armMesh = MeshBuilder.CreateBox(`armMesh.${botdet._id}`, {height: .7, width: .7, depth: .7}, scene)
-                armMesh.parent = body
+ 
                 
                 // armMesh.position = new Vector3(-.7,.68,2.3)
-                armMesh.position = new Vector3(.23,2.9,0)
+                armMesh.position = new Vector3(.23,1.5,0)
 
                 armMesh.isVisible = false
                 body.isVisible = false
                 core.isVisible = false
-
-                armFireSys.emitter = armMesh
-                armFireSys.stop()
+                // armFireSys.stop()
                 armMesh.addRotation(0,0,0)
 
                 const {animationGroups, meshes} = await SceneLoader.ImportMeshAsync("", "./modelz/", "bot.glb", scene)
@@ -1351,13 +1616,20 @@
                
                 meshes[0].animations = animationGroups
                 let armBone
+                const spine = meshes[0].getChildren()[0].getChildren()[4]
+                core.parent = spine
                 meshes[0].getChildren()[0].getChildren().forEach(bonz => {
-                    if(bonz.name === "Arm.R") armBone = bonz
+                    if(bonz.name === "Arm.R"){
+                        
+                        armBone = bonz.getChildren()[0]
+                    }
+                    
                 })
-                armMesh.parent = armBone
+   
                 armFireSys.emitter = armMesh
+                armMesh.parent = armBone
                 
-                
+                let handMesh
                 meshes.forEach(mesh => {
                     if(mesh.name.includes("root") || mesh.name.includes(botdet.bodyType) || mesh.name.includes(botdet.headType)){
                         mesh.isVisible = true
@@ -1365,7 +1637,9 @@
                         mesh.position = new Vector3(0,-1, 0)
                         
                         mesh.rotationQuaternion = null
-                        
+                        if(mesh.name.includes(botdet.bodyType)){
+                            handMesh = mesh
+                        }
                     }else{
                         mesh.isVisible = false
                     }
@@ -1385,9 +1659,9 @@
                    
                 })
                 Weap.meshes[0].parent = armBone
-                Weap.meshes[0].position.y += 2.8
+                Weap.meshes[0].position.y -= .2
                 Weap.meshes[0].addRotation(Math.PI/2,0,0)
-                Weap.meshes[0].position = new Vector3(.3,2.4,0)
+                Weap.meshes[0].position = new Vector3(.3,1.8,0)
 
                 if(botdet.isSmoking){
                     const smok = smokeSys.clone(`smoke.${botdet._id}`)
@@ -1405,24 +1679,79 @@
                     armFireSys,
                     energy: botdet.energy,
                     maxEnergy: botdet.maxEnergy,
-                    RootB: meshes[0]
+                    RootB: meshes[0],
+                    speed: botdet.speed,
+                    onGround:false
                 })
+
+                wallz.forEach(wall => {
+                    wall.actionManager.registerAction(new ExecuteCodeAction(
+                        {
+                            trigger: ActionManager.OnIntersectionEnterTrigger,
+                            parameter: core
+                        }, e => {
+                            if(this._botDet._id === botdet._id){
+                                this.stop()
+                                const bx = scene.getMeshByName('bx')
+                                cam.setTarget(new Vector3(body.position.x, body.position.y, body.position.z))
+                                const {x,z} = bx.getAbsolutePosition()
+                                const toEmit = {
+                                    botId: botdet._id,
+                                    dirTarg: {x,z}
+                                }
+                                socket.emit("bounce", toEmit)
+
+                                setTimeout( () => {
+                                    this.go()
+                                    cam.setTarget(body)
+                                }, 1800)
+                            }
+
+                        }
+                    ))
+                })
+                // mechWallz.forEach(wall => {
+                //     wall.actionManager.registerAction(new ExecuteCodeAction(
+                //         {
+                //             trigger: ActionManager.OnIntersectionEnterTrigger,
+                //             parameter: body
+                //         }, e => {
+                //             if(this._botDet._id === botdet._id){
+                //                 this.stop()
+                //                 const bx = scene.getMeshByName('bx')
+                //                 cam.setTarget(new Vector3(body.position.x, body.position.y, body.position.z))
+                //                 const {x,z} = bx.getAbsolutePosition()
+                //                 const toEmit = {
+                //                     botId: botdet._id,
+                //                     dirTarg: {x,z}
+                //                 }
+                //                 socket.emit("bounce", toEmit)
+
+                //                 setTimeout( () => {
+                //                     this.go()
+                //                     cam.setTarget(body)
+                //                 }, 1800)
+                //             }
+
+                //         }
+                //     ))
+                // })
 
                 const toRender = () => {
                     if(!body){
                         log(`body.${body.name} unregistered in the loop`)
                         return scene.unregisterBeforeRender(toRender)
                     }
-                    wallz.forEach(wall => {
-                        if(wall.intersectsMesh(body, true)){
-                            log("intersecting")
-                            body.locallyTranslate(new BABYLON.Vector3(0,0,-.2))
-                        }
-                    })
+                    // wallz.forEach(wall => {
+                    //     if(wall.intersectsMesh(body, true)){
+                    //         log("intersecting")
+                    //         body.locallyTranslate(new BABYLON.Vector3(0,0,-.2))
+                    //     }
+                    // })
                     mechWallz.forEach(wall => {
                         if(wall.intersectsMesh(body, true)){
                             log("intersecting")
-                            body.locallyTranslate(new BABYLON.Vector3(0,0,-.2))
+                            body.locallyTranslate(new BABYLON.Vector3(0,0, -botdet.speed))
                         }
                     })
 
@@ -1430,7 +1759,7 @@
                 scene.registerBeforeRender(toRender)
 
                 // name display
-                const posY = this._desktopMode ? 1.7 : 2.4
+                const posY = this._desktopMode ? -2.2 : -2.7
                 const nameMesh = BABYLON.Mesh.CreatePlane("plane", 3);
                 
                 nameMesh.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
@@ -1439,7 +1768,7 @@
 
                 nameText.height = 0.9;
                 nameText.color = "white";
-                nameText.fontSize = this._desktopMode ? 100 : 190;
+                nameText.fontSize = this._desktopMode ? 150 : 190;
                 nameText.thickness = 0
                 // nameText.background = "red";
 
@@ -1447,6 +1776,8 @@
 
                 nameMesh.parent = core
                 nameMesh.position = new Vector3(0,posY,0)
+                nameMesh.rotation = new Vector3(0,Math.PI,Math.PI)
+                
             }
             async createChargerz(scene){
                 let chargerz = []
@@ -1485,51 +1816,103 @@
                 return chargerz
             }
             async createCliffSmall(scene){
-                const posY = 0
+                const posY = 3
                 let wallz = []
                 const { meshes } = await SceneLoader.ImportMeshAsync("", "./modelz/", "cliffsmall.glb", scene)
                 
-                const wall = meshes[0].getChildren()[0]
-                wall.parent = null
-                wall.name = 'cliff'
+                const wallMesh = meshes[0].getChildren()[0]
+                const wall = BABYLON.MeshBuilder.CreateBox("cliff", {height: 6, width: 8, depth: 22}, scene)
+                wallMesh.parent = null
+                wallMesh.parent = wall
                 wall.position = new Vector3(27.8,posY,47.57)
                 
-                wall.checkCollisions = true
-                // wallmesh.parent = wall
-                // wallmesh.position = new Vector3(1.6,-5.2,0)
-                wall.isVisible = true
+                wall.checkCollisions = true // for camera
+                wallMesh.position = new Vector3(.4,-3,0)
+                wall.isVisible = false
 
                 wallz.push(wall)
 
                 const wall2 = wall.clone(`cliff.${Math.random()}`)
                 wall2.position = new Vector3(-20,posY,40.5)
-                wall2.addRotation(0,-.3,0)
                 wallz.push(wall2)
 
                 const wall3 = wall.clone(`cliff.${Math.random()}`)
                 wall3.position = new Vector3(-36,posY,-13.8)
-                wall3.addRotation(0,-1.2,0)
+
                 wallz.push(wall3)
 
                 const wall4 = wall.clone(`cliff.${Math.random()}`)
                 wall4.position = new Vector3(40.2,posY,-24.9)
-                wall4.addRotation(0,-1.5,0)
+                // wall4.addRotation(0,-1.5,0)
                 wallz.push(wall4)
 
                 const wall5 = wall.clone(`cliff.${Math.random()}`)
                 wall5.position = new Vector3(40.9,posY,-1)
-                wall5.addRotation(0,-.5,0)
+                // wall5.addRotation(0,-.5,0)
                 wallz.push(wall5)
 
                 const wall6 = wall.clone(`cliff.${Math.random()}`)
                 wall6.position = new Vector3(-2.5,posY,-44.7)
-                wall6.addRotation(0,-Math.PI/2,0)
+                // wall6.addRotation(0,-Math.PI/2,0)
                 wallz.push(wall6)
+
+                wallz.forEach(wall => {
+                    wall.actionManager = new ActionManager(scene)
+                })
 
                 return wallz
                 
             }
+            async createCliffBig(scene){
+                const posY = -.5
+                let Bigwalls = []
+                const { meshes } = await SceneLoader.ImportMeshAsync("", "./modelz/", "cliffBig.glb", scene)
+                meshes.forEach(mesh => log(mesh.name))
+                const wall = meshes[0].getChildren()[0]
+                log(wall)
+                wall.rotationQuaternion = null
+                wall.position = new Vector3(80,posY,-20)
+                
+                wall.checkCollisions = true // for camera
+                wall.showBoundingBox = false
+                wall.isVisible = true
 
+                Bigwalls.push(wall);
+
+                const wall2 = wall.clone(`cliff.${Math.random()}`)
+                wall2.position = new Vector3(94,posY,70.5)
+                Bigwalls.push(wall2)
+
+                
+                const wall3 = wall.clone(`cliff.${Math.random()}`)
+                wall3.position = new Vector3(-110,posY,70.5)
+                wall3.rotation = new Vector3(0,Math.PI,0)
+                Bigwalls.push(wall3)
+
+                const wall4 = wall.clone(`cliff.${Math.random()}`)
+                wall4.position = new Vector3(-110,posY,-20)
+                wall4.rotation = new Vector3(0,Math.PI,0)
+                Bigwalls.push(wall4)
+
+                const BackCliff = await SceneLoader.ImportMeshAsync("", "./modelz/", "cliffBigBack.glb", scene)
+             
+                const wall5 = BackCliff.meshes[0].getChildren()[0]
+
+         
+                wall5.position = new Vector3(-10,posY,-85)
+                wall5.rotation = new Vector3(0,Math.PI,0)
+         
+                wall5.checkCollisions = true // for camera
+                wall5.isVisible = true
+
+                Bigwalls.push(wall5);
+                Bigwalls.forEach(wall => {
+                    wall.actionManager = new ActionManager(scene)
+                })
+
+                return Bigwalls
+                
+            }
             async mechwalls(scene){
                 const posY = 5
                 let wallz = []
@@ -1551,13 +1934,13 @@
 
                 const wall2 = wall.clone(`cliff.${Math.random()}`)
                 wall2.position = new Vector3(-13.6,posY,1.53)
-                wall2.addRotation(0,-Math.PI/2,0)
+                // wall2.addRotation(0,-Math.PI/2,0)
                 wallz.push(wall2)
                 wall2.actionManager = new ActionManager(scene)
 
                 const wall3 = wall.clone(`cliff.${Math.random()}`)
                 wall3.position = new Vector3(13.6,posY,-14.53)
-                wall3.addRotation(0,-.3,0)
+                // wall3.addRotation(0,-.3,0)
                 wallz.push(wall3)
                 wall3.actionManager = new ActionManager(scene)
 
@@ -1565,11 +1948,226 @@
                 const circ = Circle.meshes[0].getChildren()[0]
                 circ.parent = null
                 circ.name = 'Circ'
-                circ.position = new Vector3(0,0,0)
+                circ.position = new Vector3(0,.15,0)
                 circ.isVisible = true
+
+                const Bridge = await SceneLoader.ImportMeshAsync("", "./modelz/", "bridge.glb", scene)
+                const bridg = Bridge.meshes[0].getChildren()[0]
+                bridg.parent = null
+                bridg.name = 'Circ'
+                bridg.position = new Vector3(-6.4,-.5,108.7)
+                bridg.isVisible = true
                 
 
                 return wallz
+            }
+            async createMons(data, scene,socket){
+                log("create monster " + data.monsId)
+                if(!scene.getMeshByName(`bugmesh.${data.monsId}`)){
+                    switch(data.monstype){
+                        case "bug":
+                            this.createBug(data,scene,socket)
+                        break;
+                    }
+                }
+            }
+            async createBug(data,scene,socket){
+            
+                const posY = 1.1
+                const bugDmg = 20
+                let isDead = false
+                let theTarget = undefined
+
+                const Spader = await SceneLoader.ImportMeshAsync("", "./modelz/", "spader.glb", scene)
+                const spad = Spader.meshes[0]
+                const bugmesh = MeshBuilder.CreateBox(`bugmesh.${data.monsId}`, {height: 2, depth: 4, width:.9}, scene)
+                bugmesh.position = new Vector3(data.xloc, posY, data.zloc)
+
+                Spader.meshes.forEach(spad => {
+                    spad.rotationQuaternion = null
+                })
+                spad.parent = bugmesh
+                spad.animations = Spader.animationGroups
+                spad.position = new Vector3(0,-.9,0)
+
+
+                const bugCollision = MeshBuilder.CreateBox(`bugcollision.${data.monsId}`, {height: .5, depth: 30, width:30}, scene)
+                bugCollision.parent = bugmesh
+
+                const spaderArm = Spader.meshes[0].getChildren()[0].getChildren()[5].getChildren()[0].getChildren()[0]
+                const bugweaponColl = MeshBuilder.CreateBox(`bugweapon.${data.monsId}`, {height: .7, depth: .21, width:.5}, scene)
+                bugweaponColl.parent = spaderArm
+                bugweaponColl.position = new Vector3(0,-1,0)
+ 
+
+                bugCollision.actionManager = new ActionManager(scene)
+                bugmesh.actionManager = new ActionManager(scene)
+                bugweaponColl.actionManager = new ActionManager(scene)
+                
+                bugCollision.isVisible = false
+                bugCollision.visibility = .5
+                bugmesh.isVisible = false
+                bugweaponColl.isVisible = false
+                
+                let chaseAfterTimeOut
+                let attackingInterval
+                let checkTargetInterval
+                const chaseMach = (mach) => {
+
+                    socket.emit('monsdetect', ({
+                        monsId: data.monsId,
+                        targId: mach._id
+                    }))
+                    
+                }
+                const initDeath = () => {
+                    isDead = true
+                    clearTimeout(chaseAfterTimeOut)
+                    clearInterval(attackingInterval)
+                    clearInterval(checkTargetInterval)
+                    bugCollision.position.y += 40
+                    bugCollision.dispose()
+                    bugweaponColl.dispose()
+
+                    spad.animations.forEach(anim => {
+                        if(anim.name !== "death"){
+                            anim.stop()
+                        }else{
+                            anim.play()
+                        }
+                    })
+                }
+                setInterval( () => {
+                    log(theTarget)
+                }, 2000)
+
+                this._machinez.forEach(mach => {
+                    
+                    bugCollision.actionManager.registerAction(new ExecuteCodeAction(
+                        {
+                            trigger: ActionManager.OnIntersectionEnterTrigger,
+                            parameter: mach.body
+                        }, e => {
+                            if(theTarget !== undefined) return log("spider has a target cannot register new !")
+                            theTarget = mach
+                            
+                            log('bug sensed this bot ' + mach._id)
+                            chaseMach(theTarget)
+                            
+                            clearInterval(checkTargetInterval)
+                            checkTargetInterval = setInterval(() => {
+                                if(theTarget) return clearInterval(checkTargetInterval)
+                                const body = scene.getMeshByName(`Body.${theTarget._id}`)
+                                if(!body){
+                                    theTarget = undefined
+                                    log("the bot im chasing is maybe disposed")
+                                    clearInterval(checkTargetInterval)
+                                }
+                            }, 1000)
+                        }
+                    ))
+                    bugCollision.actionManager.registerAction(new ExecuteCodeAction(
+                        {
+                            trigger: ActionManager.OnIntersectionExitTrigger,
+                            parameter: mach.body
+                        }, e => {
+                            
+                            if(theTarget && theTarget._id === mach._id){           
+                                clearTimeout(chaseAfterTimeOut)
+                                log('bug stoped')
+                                const {x,z} = mach.body.getAbsolutePosition()
+                                
+                                theTarget = undefined
+                                clearInterval(checkTargetInterval) // checking kung may hinahabol pa siya
+                                socket.emit('monstop', ({
+                                    monsId: data.monsId,
+                                    dirTarg: {x,z},
+                                    loc: {x:bugmesh.position.x,z:bugmesh.position.z}
+                                }))
+                                
+                            }
+
+                        }
+                    ))
+                    bugmesh.actionManager.registerAction(new ExecuteCodeAction(
+                        {
+                            trigger: ActionManager.OnIntersectionEnterTrigger,
+                            parameter: mach.body
+                        }, e => {
+                            if(isDead) return
+                            if(theTarget && theTarget._id === mach._id){
+                                log('bug attack ' + mach._id)
+                                clearTimeout(chaseAfterTimeOut)
+                                const {x,z} = mach.body.getAbsolutePosition()
+                                socket.emit('monsattack', ({
+                                    monsId: data.monsId,
+                                    targId: mach._id,
+                                    dirTarg: {x,z},
+                                    loc: {x:bugmesh.position.x,z:bugmesh.position.z}
+                                }))
+                                clearInterval(attackingInterval)
+                                attackingInterval = setInterval(() => {
+                                    if(!theTarget){
+                                        log("I will attack but there is no target")
+                                        return clearInterval(attackingInterval)
+                                    }
+                                    const theCore = scene.getMeshByName(`core.${theTarget._id}`)
+                                    if(!theCore){
+                                    theTarget = undefined
+                                    return clearInterval(attackingInterval)
+                                    } 
+                                    socket.emit('monsattack', ({
+                                        monsId: data.monsId,
+                                        targId: mach._id,
+                                        dirTarg: {x,z},
+                                        loc: {x:bugmesh.position.x,z:bugmesh.position.z}
+                                    }))
+                                }, 3000)
+                            }
+                            
+                        }
+                    ))
+                    bugmesh.actionManager.registerAction(new ExecuteCodeAction(
+                        {
+                            trigger: ActionManager.OnIntersectionExitTrigger,
+                            parameter: mach.body
+                        }, e => {
+                            if(isDead) return
+                            if(theTarget && theTarget._id === mach._id){
+                                clearTimeout(chaseAfterTimeOut)
+                                clearInterval(attackingInterval) // hinde na titirahin pag ka alpas sa ulo
+                                chaseAfterTimeOut = setTimeout( () => {
+                                    chaseMach(mach)
+                                }, 1500)
+                            }
+                        }
+                    ))
+
+                    bugweaponColl.actionManager.registerAction(new ExecuteCodeAction(
+                        {
+                            trigger: ActionManager.OnIntersectionEnterTrigger,
+                            parameter: mach.core
+                        }, e => {
+                            
+                            socket.emit("hit", {botId: mach._id, dmg: bugDmg})
+                        }
+                    ))
+                    bugweaponColl.actionManager.registerAction(new ExecuteCodeAction(
+                        {
+                            trigger: ActionManager.OnIntersectionExitTrigger,
+                            parameter: mach.core
+                        }, e => {
+                            bugweaponColl.position = new Vector3(0,-1,0)
+                            
+                        }
+                    ))
+                })
+
+
+                this.monsterz.push({monsId: data.monsId, body: bugmesh, collis: bugCollision, monshp: data.monshp, maxhp: data.maxhp,
+                isMoving: false, isAttacking: false, dirTarg: {x:0, z:0}, targId: null,
+                spad, initDeath})
+
             }
             createBar(){
                 const newBar = document.createElement('div')
@@ -1649,19 +2247,7 @@
             }
             let data
             try {
-                const result = await fetch(`${apiURL}/users/login`,{
-                    method: 'POST', // *GET, POST, PUT, DELETE, etc.
-                    mode: 'cors', // no-cors, *cors, same-origin
-                    cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-                    credentials: 'same-origin', // include, *same-origin, omit
-                    headers: {
-                    'Content-Type': 'application/json'
-                    // 'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    redirect: 'follow', // manual, *follow, error
-                    referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-                    body: JSON.stringify(toPost)
-                })
+                const result = await fetch(`${apiURL}/users/login`, apiOpt('POST', toPost))
 
                 data = await result.json()
                 
@@ -1673,8 +2259,11 @@
                 console.log(error)
                 return
             }
-         
-            new App(data.details.haveBot, data)
+            const botres = await fetch(`${apiURL}/bots`)
+            const botz = await botres.json()
+           
+            const isHaveBot = botz.some(bot => bot.owner === data.details._id)
+            new App(isHaveBot, data)
             sessionStorage.setItem("bagUserDet", JSON.stringify(data))
             
         })
@@ -1726,30 +2315,5 @@
             introCont.style.display = "block"
             introSign.style.display = "none"
         })
-        startGame.addEventListener("click", e => {
 
-            if (!characName.value.length) {
-                alert("Enter Character Name")
-            } else {
-                introCont.style.display = "block"
-                introSign.style.display = "none"
-                setCharacterBx.style.display = "flex"
-
-                const toSave = {
-                    x: 0,
-                    z: 0,
-                    stage: "lajar",
-                    myId: Math.random().toString().split(".")[1],
-                }
-
-                sessionStorage.setItem("advalleyCharacter", JSON.stringify(toSave))
-                introHome.style.display = "none"
-                setCharacterBx.style.display = "none"
-                canvas.style.display = "block"
-                setTimeout(() => {
-                    new App()
-                }, 500)
-            }
-
-        })
             
